@@ -1,0 +1,75 @@
+name: documinchat
+
+x-backend: &backend
+  image: documinchat-backend:local
+  build: ./backend
+  environment: &backend-env
+    APP_ENV: ${APP_ENV:-development}
+    DATABASE_URL: postgresql+psycopg://documinchat:${POSTGRES_PASSWORD:?Run python3 scripts/bootstrap_env.py}@postgres:5432/documinchat
+    DATA_DIR: /data/uploads
+    LLM_BASE_URL: ${LLM_BASE_URL:-}
+    LLM_API_KEY: ${LLM_API_KEY:-}
+    LLM_MODEL: ${LLM_MODEL:-}
+    LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
+    LANGSMITH_TRACING: "false"
+  volumes:
+    - documents:/data
+  init: true
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+    environment:
+      POSTGRES_USER: documinchat
+      POSTGRES_DB: documinchat
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python3 scripts/bootstrap_env.py}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U documinchat -d documinchat"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *backend
+    command: [alembic, upgrade, head]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+    stop_grace_period: 15s
+
+  worker:
+    <<: *backend
+    command: [python, -m, app.jobs.worker]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    mem_limit: 1g
+    stop_grace_period: 10s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:3030:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres:
+  documents:

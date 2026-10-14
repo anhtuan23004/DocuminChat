@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>DocuminChat</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310a37f'/%3E%3Ctext x='7' y='24' font-size='24' fill='white'%3ED%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/assets/workbench.css" />
+  </head>
+  <body data-documents-collapsed="true" data-sidebar-collapsed="false">
+    <a class="skip-link" href="#composer">Đến ô nhập câu hỏi</a>
+    <svg
+      class="svg-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24">
+        <path
+          d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5H4v-7.5A8.5 8.5 0 1 1 20 11.5Z"
+        />
+      </symbol>
+      <symbol id="i-doc" viewBox="0 0 24 24">
+        <path
+          d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8M8 17h5"
+        />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="m6 12 6-6 6 6M12 6v13" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M12 16V4m-5 5 5-5 5 5M4 16v4h16v-4" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24">
+        <rect x="6" y="6" width="12" height="12" rx="1" />
+      </symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24">
+        <path d="m9 5 7 7-7 7" />
+      </symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24">
+        <path d="M6 3h12v18l-6-4-6 4V3Z" />
+      </symbol>
+      <symbol id="i-attach" viewBox="0 0 24 24">
+        <path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l8-8" />
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24">
+        <path d="M3 7h7l2 2h9v11H3V7Zm0 0V4h7l2 3" />
+      </symbol>
+      <symbol id="i-model" viewBox="0 0 24 24">
+        <rect x="6" y="6" width="12" height="12" rx="2" />
+        <path d="M9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3" />
+      </symbol>
+      <symbol id="i-archive" viewBox="0 0 24 24">
+        <path d="M4 8h16v13H4V8Zm-1-5h18v5H3V3Zm6 9h6" />
+      </symbol>
+      <symbol id="i-undo" viewBox="0 0 24 24">
+        <path d="M5 6v6h6M5 12a8 8 0 1 1 2 7" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 4 4" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="12" height="12" rx="2" />
+        <path d="M15 8V4H4v11h4" />
+      </symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24">
+        <path d="m15 4 5 5-11 11H4v-5L15 4Z" />
+      </symbol>
+    </svg>
+    <div id="scrim" class="scrim" hidden></div>
+    <aside id="sidebar" class="sidebar" aria-label="Điều hướng hội thoại">
+      <div class="sidebar-heading">
+        <button id="home" class="brand" aria-label="DocuminChat, trang chủ">
+          <span class="brand-mark">D</span><span>DocuminChat</span>
+        </button>
+        <button
+          class="icon-button drawer-close"
+          data-close
+          aria-label="Đóng danh sách hội thoại"
+        >
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <nav class="main-navigation" aria-label="Điều hướng chính">
+        <button id="new-chat" class="nav-action">
+          <svg><use href="#i-edit" /></svg><span>Cuộc trò chuyện mới</span>
+        </button>
+        <button id="search-chats" class="nav-action">
+          <svg><use href="#i-search" /></svg><span>Tìm hội thoại</span
+          ><kbd>⌘ K</kbd>
+        </button>
+      </nav>
+      <div class="sidebar-scroll">
+        <section class="projects-navigation" aria-label="Projects">
+          <div class="section-heading"><h2>Projects</h2></div>
+          <button id="new-project" class="nav-action" aria-label="Tạo Project">
+            <svg><use href="#i-folder" /></svg><span>Project mới</span
+            ><svg class="small-icon"><use href="#i-plus" /></svg>
+          </button>
+          <nav id="project-list" aria-label="Danh sách Project"></nav>
+          <button id="more-projects" class="text-button" hidden>
+            Xem thêm Project
+          </button>
+        </section>
+        <div class="history-tabs">
+          <button id="history-active" class="active" aria-pressed="true">
+            Gần đây</button
+          ><button id="history-archived" aria-pressed="false">
+            Đã lưu trữ
+          </button>
+        </div>
+        <nav
+          id="session-list"
+          class="session-list"
+          aria-label="Danh sách hội thoại"
+        ></nav>
+        <button id="more-sessions" class="text-button" hidden>
+          Xem thêm hội thoại
+        </button>
+      </div>
+      <div class="sidebar-foot">
+        <span class="avatar">D</span>
+        <div>
+          <strong>Không gian của bạn</strong
+          ><span>Hội thoại được lưu tự động</span>
+        </div>
+        <button
+          id="theme-toggle"
+          class="icon-button"
+          aria-label="Đổi giao diện sáng hoặc tối"
+          title="Đổi giao diện"
+        >
+          ◐
+        </button>
+      </div>
+    </aside>
+    <main id="main" class="main">
+      <header class="topbar">
+        <button
+          id="open-sidebar"
+          class="icon-button"
+          aria-label="Mở danh sách hội thoại"
+          aria-controls="sidebar"
+          aria-expanded="true"
+        >
+          <svg><use href="#i-menu" /></svg>
+        </button>
+        <div class="breadcrumb">
+          <button
+            id="back-to-project"
+            class="project-breadcrumb"
+            title="Trở về Project"
+            aria-label="Trở về Project"
+          >
+            <svg><use href="#i-folder" /></svg
+            ><span id="workspace-name"></span></button
+          ><span id="breadcrumb-divider" hidden>/</span
+          ><strong id="chat-title">DocuminChat</strong>
+        </div>
+        <div class="header-actions">
+          <button
+            id="open-documents"
+            class="panel-toggle"
+            aria-label="Mở hoặc thu gọn bảng tài liệu"
+            aria-controls="documents-panel"
+            aria-expanded="false"
+          >
+            <svg><use href="#i-doc" /></svg><span>Tài liệu</span
+            ><span id="doc-count" class="count">0</span>
+          </button>
+          <details id="chat-options" class="chat-menu" hidden>
+            <summary aria-label="Tùy chọn hội thoại" title="Tùy chọn hội thoại">
+              •••
+            </summary>
+            <div class="menu-items">
+              <button id="rename-chat">
+                <svg><use href="#i-edit" /></svg>Đổi tên
+              </button>
+              <button id="move-chat">
+                <svg><use href="#i-folder" /></svg>Chuyển Project
+              </button>
+              <button
+                id="pin-chat"
+                aria-label="Ghim hội thoại hiện tại"
+                aria-pressed="false"
+              >
+                <svg><use href="#i-bookmark" /></svg><span>Ghim hội thoại</span>
+              </button>
+              <button id="archive-current">
+                <svg><use href="#i-archive" /></svg
+                ><span>Lưu trữ hội thoại</span>
+              </button>
+            </div>
+          </details>
+        </div>
+      </header>
+      <div class="connection-line">
+        <span id="connection" class="connection" role="status"
+          >Đang kết nối…</span
+        ><button id="retry-connection" class="text-button" hidden>
+          Thử lại
+        </button>
+      </div>
+      <div
+        id="chat-error"
+        class="inline-error main-error"
+        role="alert"
+        hidden
+      ></div>
+      <div
+        id="conversation"
+        class="conversation"
+        role="log"
+        aria-label="Nội dung hội thoại"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
+        <div id="chat-loading" class="chat-loading" role="status" hidden>
+          Đang mở hội thoại…
+        </div>
+        <section id="project-view" class="project-view" hidden>
+          <header class="project-hero">
+            <div class="project-title">
+              <svg><use href="#i-folder" /></svg>
+              <h1 id="project-heading"></h1>
+            </div>
+            <button
+              id="project-files"
+              class="secondary-button"
+              aria-label="Quản lý tài liệu Project"
+            >
+              <svg><use href="#i-doc" /></svg
+              ><span id="project-file-count">0</span> tệp
+            </button>
+          </header>
+          <p class="project-description">
+            Một nơi cho các cuộc trò chuyện và tài liệu của bạn.
+          </p>
+          <div id="project-composer-slot"></div>
+          <div class="project-actions">
+            <button id="project-start-chat" class="text-button">
+              <svg><use href="#i-plus" /></svg>Hội thoại mới</button
+            ><button
+              id="project-add-file"
+              class="text-button"
+              aria-label="Thêm tệp vào Project"
+            >
+              <svg><use href="#i-attach" /></svg>Thêm tệp vào Project
+            </button>
+          </div>
+          <section class="project-section">
+            <div class="section-heading">
+              <h2>Tài liệu chung</h2>
+              <span class="section-caption"
+                >Dùng trong mọi chat của Project</span
+              >
+            </div>
+            <div id="project-file-list"></div>
+          </section>
+          <section class="project-section">
+            <div class="section-heading"><h2>Hội thoại</h2></div>
+            <div id="project-chat-list"></div>
+            <button id="more-project-chats" class="text-button" hidden>
+              Xem thêm hội thoại
+            </button>
+          </section>
+        </section>
+        <section id="welcome" class="welcome">
+          <span class="welcome-kicker">DOCUMINCHAT</span>
+          <h1>Hôm nay bạn muốn tìm hiểu gì?</h1>
+          <div id="welcome-composer-slot"></div>
+          <div class="suggestions">
+            <button
+              class="suggestion"
+              data-prompt="Tóm tắt những ý chính trong tài liệu này"
+            >
+              <svg><use href="#i-doc" /></svg>Tóm tắt tài liệu</button
+            ><button
+              class="suggestion"
+              data-prompt="Giải thích chi tiết nội dung này và chỉ ra nguồn tham khảo"
+            >
+              <svg><use href="#i-search" /></svg>Tìm hiểu và đối chiếu nguồn
+            </button>
+          </div>
+          <p class="welcome-tip">
+            Đính kèm tài liệu cho chat này, hoặc tạo Project để dùng chung
+            nguồn.
+          </p>
+        </section>
+        <div id="messages" class="messages"></div>
+      </div>
+      <button
+        id="jump-to-bottom"
+        class="icon-button jump-button"
+        aria-label="Đến tin nhắn mới nhất"
+        hidden
+      >
+        ↓
+      </button>
+      <div id="composer-dock" class="composer-dock">
+        <div id="composer-area" class="composer-area">
+          <div id="context-label" class="context-label"></div>
+          <form id="chat-form" class="composer-form">
+            <div
+              id="attachment-list"
+              class="attachment-list"
+              aria-label="Tài liệu đính kèm"
+            ></div>
+            <textarea
+              id="composer"
+              aria-label="Câu hỏi của bạn"
+              placeholder="Nhắn DocuminChat…"
+              rows="1"
+              maxlength="4000"
+            ></textarea>
+            <div class="composer-bottom">
+              <div class="composer-tools">
+                <button
+                  id="attach-file"
+                  class="icon-button attach-button"
+                  type="button"
+                  aria-label="Đính kèm tài liệu"
+                  title="Đính kèm PDF hoặc TXT"
+                >
+                  <svg><use href="#i-plus" /></svg>
+                </button>
+                <button
+                  id="composer-documents"
+                  class="context-button"
+                  type="button"
+                  aria-label="Chọn tài liệu"
+                >
+                  <svg><use href="#i-doc" /></svg><span>Tài liệu</span>
+                </button>
+                <button
+                  id="model-info"
+                  class="model-chip"
+                  type="button"
+                  aria-label="Xem model đang dùng"
+                >
+                  <span id="model-name">Chưa có model</span><span>⌄</span>
+                </button>
+              </div>
+              <button
+                id="stop"
+                type="button"
+                class="stop-button"
+                aria-label="Dừng trả lời"
+                hidden
+              >
+                <svg><use href="#i-stop" /></svg></button
+              ><button
+                id="send"
+                class="send-button"
+                type="submit"
+                aria-label="Gửi câu hỏi"
+              >
+                <svg><use href="#i-arrow" /></svg>
+              </button>
+            </div>
+          </form>
+          <p class="footnote">
+            Kiểm tra nguồn khi sử dụng thông tin từ câu trả lời.
+          </p>
+        </div>
+      </div>
+    </main>
+    <dialog
+      id="documents-panel"
+      class="documents-panel"
+      aria-labelledby="document-scope-title"
+    >
+      <div class="panel-heading">
+        <div>
+          <svg><use href="#i-doc" /></svg>
+          <h2 id="document-scope-title">Tài liệu hội thoại</h2>
+        </div>
+        <button
+          class="icon-button"
+          data-close-documents
+          aria-label="Đóng bảng tài liệu"
+        >
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <div class="document-scroll">
+        <p id="document-scope-description" class="panel-description"></p>
+        <select id="document-target" aria-label="Nơi lưu tài liệu" hidden>
+          <option value="session">Chỉ hội thoại này</option>
+        </select>
+        <label class="upload-zone" id="upload-zone" for="file-input"
+          ><svg><use href="#i-upload" /></svg>
+          <div>
+            <strong>Thêm tài liệu</strong
+            ><span>PDF hoặc TXT · tối đa 20 MB</span>
+          </div>
+          <input
+            id="file-input"
+            type="file"
+            accept=".pdf,.txt"
+            aria-label="Tải file PDF hoặc TXT"
+        /></label>
+        <div id="document-error" class="inline-error" role="alert" hidden></div>
+        <div class="section-heading">
+          <h3>Tài liệu</h3>
+          <button
+            id="refresh-documents"
+            class="text-button"
+            aria-label="Làm mới tài liệu"
+          >
+            Làm mới
+          </button>
+        </div>
+        <div id="document-list" class="document-list"></div>
+        <div class="sources-heading">
+          <h3>Nguồn tham khảo</h3>
+          <span id="source-count" class="count">0</span>
+        </div>
+        <div id="source-list" class="source-list"></div>
+      </div>
+    </dialog>
+    <dialog
+      id="project-dialog"
+      class="form-dialog"
+      aria-labelledby="project-dialog-title"
+    >
+      <form id="project-form">
+        <h2 id="project-dialog-title">Tạo Project</h2>
+        <p>Gom các cuộc trò chuyện và tài liệu về cùng một chủ đề.</p>
+        <label for="project-name-input">Tên Project</label
+        ><input
+          id="project-name-input"
+          name="name"
+          required
+          maxlength="120"
+          placeholder="Ví dụ: Nghiên cứu sản phẩm"
+        />
+        <div id="project-error" class="inline-error" role="alert" hidden></div>
+        <div class="dialog-actions">
+          <button id="project-cancel" type="button" class="secondary-button">
+            Hủy</button
+          ><button id="project-create" class="primary-button" type="submit">
+            Tạo
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog
+      id="search-dialog"
+      class="search-dialog"
+      aria-labelledby="search-title"
+    >
+      <header class="panel-heading">
+        <h2 id="search-title">Tìm hội thoại</h2>
+        <button
+          id="search-close"
+          class="icon-button"
+          aria-label="Đóng tìm kiếm"
+        >
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <label class="search-field"
+        ><svg><use href="#i-search" /></svg
+        ><input
+          id="session-search"
+          type="search"
+          maxlength="200"
+          placeholder="Tìm theo tên hoặc nội dung đã trao đổi…"
+          aria-label="Tìm trong lịch sử hội thoại"
+      /></label>
+      <p class="search-hint">
+        Tìm trong mọi Project và cả các hội thoại đã lưu trữ.
+      </p>
+      <div id="search-error" class="inline-error" role="alert" hidden></div>
+      <div
+        id="search-results"
+        class="search-results"
+        role="region"
+        aria-label="Kết quả tìm kiếm"
+        aria-live="polite"
+      ></div>
+      <button id="more-search" class="text-button" hidden>
+        Xem thêm kết quả
+      </button>
+    </dialog>
+    <dialog
+      id="rename-dialog"
+      class="form-dialog"
+      aria-labelledby="rename-heading"
+    >
+      <form id="rename-form">
+        <h2 id="rename-heading">Đổi tên hội thoại</h2>
+        <label for="rename-title">Tên hội thoại</label
+        ><input id="rename-title" required maxlength="120" />
+        <div id="rename-error" class="inline-error" role="alert" hidden></div>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" data-dialog-close>
+            Hủy</button
+          ><button id="rename-save" class="primary-button">Lưu</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="move-dialog" class="form-dialog" aria-labelledby="move-heading">
+      <form id="move-form">
+        <h2 id="move-heading">Chuyển hội thoại</h2>
+        <label for="session-project">Project đích</label
+        ><select
+          id="session-project"
+          aria-label="Project của hội thoại"
+        ></select>
+        <p id="session-project-hint">
+          Lịch sử và tài liệu riêng được giữ nguyên. Hội thoại sẽ dùng nguồn
+          chung của Project mới.
+        </p>
+        <div id="move-error" class="inline-error" role="alert" hidden></div>
+        <div class="dialog-actions">
+          <button type="button" class="secondary-button" data-dialog-close>
+            Hủy</button
+          ><button id="move-save" class="primary-button">Chuyển</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog
+      id="model-dialog"
+      class="form-dialog"
+      aria-labelledby="model-dialog-title"
+    >
+      <form method="dialog">
+        <h2 id="model-dialog-title">Model đang dùng</h2>
+        <p id="model-description">Chưa cấu hình model.</p>
+        <p>Model kết nối được cấu hình trong backend của DocuminChat.</p>
+        <div class="dialog-actions">
+          <button class="secondary-button">Đóng</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

@@ -40,6 +40,17 @@ function sidebar() {
   $("sidebar").querySelector("button").focus();
 }
 function openDocuments() {
+  if ($("panel-docs-body") && $("panel-trace-body")) {
+    $("panel-docs-body").hidden = false;
+    if ($("panel-params-body")) $("panel-params-body").hidden = true;
+    $("panel-trace-body").hidden = true;
+    $("panel-tab-docs")?.classList.add("active");
+    $("panel-tab-docs")?.setAttribute("aria-selected", "true");
+    $("panel-tab-params")?.classList.remove("active");
+    $("panel-tab-params")?.setAttribute("aria-selected", "false");
+    $("panel-tab-trace")?.classList.remove("active");
+    $("panel-tab-trace")?.setAttribute("aria-selected", "false");
+  }
   if (!$("documents-panel").open) {
     $("documents-panel").showModal();
     $("documents-panel").classList.add("open");
@@ -49,6 +60,9 @@ function openDocuments() {
 $("documents-panel").addEventListener("close", () => {
   $("documents-panel").classList.remove("open");
   $("open-documents").setAttribute("aria-expanded", "false");
+  document
+    .querySelectorAll("[data-rail]")
+    .forEach((btn) => btn.setAttribute("aria-pressed", "false"));
 });
 $("open-documents").addEventListener("click", openDocuments);
 $("project-files").addEventListener("click", openDocuments);

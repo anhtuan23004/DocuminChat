@@ -1,34 +1,50 @@
 :root {
   color-scheme: dark;
-  --bg: #212121;
-  --sidebar: #171717;
-  --surface: #2f2f2f;
-  --hover: #303030;
-  --line: #424242;
-  --text: #ececec;
-  --muted: #b4b4b4;
-  --accent: #62c7ad;
-  --danger: #ffb4b4;
-  --success: #9bd1bb;
-  --shadow: 0 16px 64px #0005;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --bg: #16171a;
+  --sidebar: #111214;
+  --surface: #1e2025;
+  --surface-elevated: #262930;
+  --hover: #282b33;
+  --line: #2e323b;
+  --text: #eceef2;
+  --muted: #949ba8;
+  --accent: #34d399;
+  --accent-solid: #0b7a5f;
+  --amber: #f59e0b;
+  --purple: #a78bfa;
+  --blue: #60a5fa;
+  --danger: #f87171;
+  --success: #34d399;
+  --shadow: 0 18px 64px rgba(0, 0, 0, 0.45);
+  --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-family:
+    "IBM Plex Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 14px;
   color: var(--text);
   background: var(--bg);
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #fff;
-  --sidebar: #f9f9f9;
-  --surface: #f3f3f3;
-  --hover: #ececec;
-  --line: #dedede;
-  --text: #202020;
-  --muted: #686868;
+  --bg: #ffffff;
+  --sidebar: #f6f7f9;
+  --surface: #f1f3f6;
+  --surface-elevated: #e8ebf0;
+  --hover: #e5e8ef;
+  --line: #d5d9e2;
+  --text: #16181d;
+  --muted: #555b66;
   --accent: #08785b;
-  --danger: #ad3030;
-  --success: #217359;
-  --shadow: 0 16px 64px #0002;
+  --accent-solid: #08785b;
+  --amber: #b45309;
+  --purple: #6d28d9;
+  --blue: #1d4ed8;
+  --danger: #b91c1c;
+  --success: #08785b;
+  --shadow: 0 16px 48px rgba(15, 23, 42, 0.12);
 }
 * {
   box-sizing: border-box;

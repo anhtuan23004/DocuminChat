@@ -276,6 +276,66 @@
   border-radius: 16px;
   border: 1px solid var(--line);
 }
+.trace-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.trace-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+.trace-pill.ok {
+  color: var(--success);
+}
+.trace-pill.warn {
+  color: var(--amber);
+}
+.trace-open-btn {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.citation-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  margin: 0 2px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  vertical-align: baseline;
+}
+.citation-chip:hover {
+  background: var(--hover);
+  border-color: var(--accent);
+}
 .chat-loading {
   padding: 48px;
   color: var(--muted);

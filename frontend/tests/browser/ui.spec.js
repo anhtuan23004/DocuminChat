@@ -62,6 +62,31 @@ test("real stack: upload and persistence on desktop", async ({ page }) => {
   await expect(page.locator("#documents-panel")).toBeVisible();
   await page.getByRole("button", { name: "Đóng bảng tài liệu" }).click();
   await expect(page.locator("#documents-panel")).toBeHidden();
+  await page.locator("#rail-params").click();
+  await expect(page.locator("#documents-panel")).toBeVisible();
+  await expect(page.locator("#panel-params-body")).toBeVisible();
+  await expect(page.locator("#panel-params-body")).toContainText(
+    "Chunking & Ingestion",
+  );
+  await expect(page.locator("#panel-params-body")).toContainText(
+    "RAG & Retrieval",
+  );
+  await expect(page.locator("#panel-params-body")).toContainText(
+    "Context Engineering",
+  );
+  await expect(page.locator("#panel-params-body")).toContainText(
+    "Memory (Hội thoại)",
+  );
+  await expect(page.locator("#panel-params-body")).toContainText(
+    "Prompt & Generator",
+  );
+  await page.locator("#btn-open-ab-studio").click();
+  await expect(page.locator("#studio-dialog")).toBeVisible();
+  await expect(page.locator("#studio-ab-view")).toBeVisible();
+  await page.locator("#btn-studio-close").click();
+  await expect(page.locator("#studio-dialog")).toBeHidden();
+  await page.getByRole("button", { name: "Đóng bảng tài liệu" }).click();
+  await expect(page.locator("#documents-panel")).toBeHidden();
   await page.locator("#open-sidebar").click();
   await expect(page.locator("#sidebar")).toBeHidden();
   await page.locator("#open-sidebar").click();
@@ -135,7 +160,11 @@ test("explicit API fixture: streaming, sources, safe text and reload", async ({
     const path = new URL(route.request().url()).pathname;
     let data;
     if (path.endsWith("/health")) data = { model_configured: true };
-    else if (path.endsWith("/documents") || path.endsWith("/projects"))
+    else if (
+      path.endsWith("/documents") ||
+      path.endsWith("/projects") ||
+      path.endsWith("/presets")
+    )
       data = { items: [] };
     else if (path.endsWith("/sessions"))
       data =
@@ -188,9 +217,23 @@ test("explicit API fixture: streaming, sources, safe text and reload", async ({
     "<script>unsafe</script>",
   );
   expect(await page.locator(".source-excerpt script").count()).toBe(0);
+  await page.locator("#panel-tab-trace").click();
+  await expect(page.locator("#panel-trace-body")).toBeVisible();
+  await expect(
+    page.locator("#panel-trace-body .trace-timeline-track"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Đóng bảng tài liệu" }).click();
+  await page.locator("#view-trace-tab").click();
+  await expect(page.locator("#trace-workspace")).toBeVisible();
+  await expect(page.locator("#trace-full-detail")).toContainText("BƯỚC 1");
+  await page.locator("#view-chat-tab").click();
+  await expect(page.locator("#conversation")).toBeVisible();
   await page.reload();
   await page.locator(".session-row").click();
   await expect(page.locator(".message.assistant")).toContainText("Tiếng Việt");
+  await expect(
+    page.locator(".message.assistant .trace-meta-line"),
+  ).toContainText("1 đoạn khớp");
 });
 
 test("explicit API fixture: offline backend and failed ingestion", async ({

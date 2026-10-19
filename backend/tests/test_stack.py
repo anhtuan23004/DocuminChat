@@ -106,15 +106,20 @@ def test_stream_history_idempotency_and_sources(stack, session_scope):
     result = client.post(f"/api/v1/sessions/{session_id}/messages", json=payload)
     assert result.status_code == 200
     assert "event: delta" in result.text and "event: done" in result.text
-    assert "event: sources" in result.text
+    assert "event: sources" in result.text and "event: trace" in result.text
     assert "thirty days" in seen[0]["messages"][0]["content"]
     retry = client.post(f"/api/v1/sessions/{session_id}/messages", json=payload)
     assert "event: done" in retry.text
     assert len(seen) == 1
-    assert len(client.get(f"/api/v1/sessions/{session_id}/messages").json()["items"]) == 2
+    history_items = client.get(f"/api/v1/sessions/{session_id}/messages").json()["items"]
+    assert len(history_items) == 2
+    assert history_items[1]["trace"]["matched_chunks"] == 1
+    assert history_items[1]["trace"]["phase"] == "completed"
     payload["content"] = "different request"
     assert client.post(f"/api/v1/sessions/{session_id}/messages", json=payload).status_code == 409
-    sources = client.get(f"/api/v1/sessions/{session_id}/messages").json()["items"][1]["sources"]
+    sources = history_items[1]["sources"]
+    assert sources[0]["score"] >= 1
+    assert "refund" in sources[0]["matched_terms"]
     assert client.get(f"/api/v1/sources/{sources[0]['chunk_id']}").json()["text"]
     with factory() as db:
         d = db.get(Document, doc["id"])
@@ -182,3 +187,40 @@ def test_foreign_session_and_upload_deduplication(stack, session_scope):
         files={"file": ("b.txt", b"same contents")},
     ).json()
     assert a["id"] == b["id"]
+
+
+def test_modular_pipeline_presets_and_ab_sandbox(stack, session_scope):
+    settings, factory, _app, client = stack
+    presets = client.get("/api/v1/presets")
+    assert presets.status_code == 200
+    items = presets.json()["items"]
+    assert len(items) >= 3
+    assert any(p["id"] == "preset-b" for p in items)
+
+    doc = client.post(
+        "/api/v1/documents",
+        data={"session_id": session_scope},
+        files={
+            "file": (
+                "sla-2026.txt",
+                b"Vi pham SLA gian doan qua 4 gio phat 8% phi thang. Mien tru khi bao tri.",
+            )
+        },
+    ).json()
+    process_one(settings, factory)
+
+    sandbox_res = client.post(
+        "/api/v1/eval/sandbox",
+        json={
+            "module": "ab",
+            "query": "Mức phạt SLA và miễn trừ?",
+            "session_id": session_scope,
+            "document_ids": [doc["id"]],
+        },
+    )
+    assert sandbox_res.status_code == 200
+    ab_data = sandbox_res.json()
+    assert ab_data["module"] == "ab"
+    assert "column_a" in ab_data and "column_b" in ab_data
+    assert "rag_triad" in ab_data["column_b"]
+

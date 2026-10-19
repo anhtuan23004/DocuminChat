@@ -13,10 +13,11 @@ from app.config import Settings
 from app.generation.provider import ProviderError
 from app.integration.auth import OWNER
 from app.integration.catalog import catalog_router
-from app.integration.schemas import ChatRequest, NewSession, SessionUpdate
+from app.integration.schemas import ChatRequest, NewSession, SandboxRequest, SessionUpdate
 from app.integration.turns import begin, finish, message_dict
 from app.projects.scopes import owned_project, owned_session
 from app.rag.graph import build_graph
+from app.rag.pipeline import PRESETS, run_sandbox_eval
 from app.storage import Chunk, Document, Job, Message, Session, database, now
 
 log = logging.getLogger(__name__)
@@ -198,10 +199,12 @@ def create_app(settings=None, factory=None):
             if "replay" in turn:
                 msg = turn["replay"]
                 yield event("sources", {"items": msg["sources"]})
+                if msg.get("trace"):
+                    yield event("trace", msg["trace"])
                 yield event("delta", {"text": msg["content"]})
                 yield event("done", {"message_id": msg["id"], "request_id": request_id})
                 return
-            answer, sources, completed = "", [], False
+            answer, sources, trace, completed = "", [], None, False
             try:
                 graph = build_graph(
                     settings, factory, OWNER, app.state.provider_transport, session_id=session_id
@@ -212,6 +215,11 @@ def create_app(settings=None, factory=None):
                             "query": payload.content,
                             "document_ids": turn["document_ids"],
                             "history": turn["history"],
+                            "pipeline_config": (
+                                payload.pipeline_config.model_dump()
+                                if payload.pipeline_config
+                                else None
+                            ),
                         },
                         stream_mode=["custom", "updates"],
                     ):
@@ -220,6 +228,8 @@ def create_app(settings=None, factory=None):
                                 answer += data["data"]["text"]
                             elif data["type"] == "sources":
                                 sources = data["data"]["items"]
+                            elif data["type"] == "trace":
+                                trace = data["data"]
                             yield event(data["type"], data["data"])
                 completed = finish(
                     factory,
@@ -229,6 +239,7 @@ def create_app(settings=None, factory=None):
                     answer,
                     sources,
                     "completed",
+                    trace=trace,
                 )
                 if not completed:
                     raise ProviderError("Lượt trả lời hết hạn. Hãy tải lại hội thoại.")
@@ -264,6 +275,7 @@ def create_app(settings=None, factory=None):
                         answer,
                         sources,
                         "failed",
+                        trace=trace,
                     )
 
         return StreamingResponse(
@@ -273,6 +285,14 @@ def create_app(settings=None, factory=None):
         )
 
     app.include_router(catalog_router(settings, factory))
+
+    @app.get("/api/v1/presets")
+    def list_presets():
+        return {"items": list(PRESETS.values())}
+
+    @app.post("/api/v1/eval/sandbox")
+    def eval_sandbox(payload: SandboxRequest):
+        return run_sandbox_eval(factory, OWNER, payload)
 
     @app.get("/api/v1/jobs/{job_id}")
     def job_status(job_id: str):
@@ -317,3 +337,4 @@ def create_app(settings=None, factory=None):
 
 
 app = create_app()
+

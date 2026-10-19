@@ -79,6 +79,31 @@
       <symbol id="i-edit" viewBox="0 0 24 24">
         <path d="m15 4 5 5-11 11H4v-5L15 4Z" />
       </symbol>
+      <symbol id="i-quote" viewBox="0 0 24 24">
+        <path d="M7 7h4v4c0 3-2 5-4 6M15 7h4v4c0 3-2 5-4 6" />
+      </symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+        <circle cx="9" cy="6" r="2" />
+        <circle cx="15" cy="12" r="2" />
+        <circle cx="10" cy="18" r="2" />
+      </symbol>
+      <symbol id="i-trace" viewBox="0 0 24 24">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+      </symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24">
+        <path d="m6 9 6 6 6-6" />
+      </symbol>
+      <symbol id="i-expand" viewBox="0 0 24 24">
+        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+      </symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="M12 4v16M6 9h3M6 13h3M15 9h3M15 13h3" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M20 6 9 17l-5-5" />
+      </symbol>
     </svg>
     <div id="scrim" class="scrim" hidden></div>
     <aside id="sidebar" class="sidebar" aria-label="Điều hướng hội thoại">
@@ -171,6 +196,31 @@
           ><strong id="chat-title">DocuminChat</strong>
         </div>
         <div class="header-actions">
+          <div
+            class="workspace-switcher"
+            role="tablist"
+            aria-label="Chế độ hiển thị không gian làm việc"
+          >
+            <button
+              id="view-chat-tab"
+              class="workspace-tab active"
+              type="button"
+              role="tab"
+              aria-selected="true"
+            >
+              Trò chuyện
+            </button>
+            <button
+              id="view-trace-tab"
+              class="workspace-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+            >
+              <span>Trace toàn trang</span>
+              <span id="trace-turn-count" class="count">0</span>
+            </button>
+          </div>
           <button
             id="open-documents"
             class="panel-toggle"
@@ -220,6 +270,26 @@
         role="alert"
         hidden
       ></div>
+      <section
+        id="trace-workspace"
+        class="trace-workspace"
+        aria-label="Không gian Trace và Đánh giá"
+        hidden
+      >
+        <div class="trace-workspace-grid">
+          <aside class="trace-sidebar-col" aria-label="Danh sách lượt trả lời">
+            <div class="section-heading">
+              <h2>Các lượt trả lời (Turns)</h2>
+            </div>
+            <div id="trace-turn-list" class="trace-turn-list"></div>
+          </aside>
+          <div
+            id="trace-full-detail"
+            class="trace-detail-col"
+            aria-label="Chi tiết Trace và Đánh giá"
+          ></div>
+        </div>
+      </section>
       <div
         id="conversation"
         class="conversation"
@@ -378,6 +448,53 @@
         </div>
       </div>
     </main>
+    <nav id="right-rail" class="right-rail" aria-label="Công cụ bên phải">
+      <button
+        id="rail-sources"
+        class="icon-button rail-btn"
+        type="button"
+        data-rail="docs"
+        aria-pressed="false"
+        aria-label="Nguồn trích dẫn"
+        title="Nguồn trích dẫn & Tài liệu"
+      >
+        <svg><use href="#i-quote" /></svg>
+      </button>
+      <button
+        id="rail-params"
+        class="icon-button rail-btn"
+        type="button"
+        data-rail="params"
+        aria-pressed="false"
+        aria-label="Tùy chỉnh Module"
+        title="Tùy chỉnh 5 Module (Parameters)"
+      >
+        <svg><use href="#i-sliders" /></svg>
+      </button>
+      <span class="rail-sep" aria-hidden="true"></span>
+      <button
+        id="rail-files"
+        class="icon-button rail-btn"
+        type="button"
+        data-rail="docs"
+        aria-pressed="false"
+        aria-label="Tài liệu tham chiếu"
+        title="Tài liệu tham chiếu"
+      >
+        <svg><use href="#i-folder" /></svg>
+      </button>
+      <button
+        id="rail-trace"
+        class="icon-button rail-btn"
+        type="button"
+        data-rail="trace"
+        aria-pressed="false"
+        aria-label="Trace thực thi"
+        title="Trace & Đánh giá"
+      >
+        <svg><use href="#i-trace" /></svg>
+      </button>
+    </nav>
     <dialog
       id="documents-panel"
       class="documents-panel"
@@ -388,48 +505,616 @@
           <svg><use href="#i-doc" /></svg>
           <h2 id="document-scope-title">Tài liệu hội thoại</h2>
         </div>
+        <div class="panel-heading-actions">
+          <button
+            class="icon-button"
+            type="button"
+            id="btn-open-full-studio"
+            aria-label="Mở rộng Studio & So sánh A/B"
+            title="Mở rộng Studio & So sánh A/B (⌘,)"
+          >
+            <svg><use href="#i-expand" /></svg>
+          </button>
+          <button
+            class="icon-button"
+            data-close-documents
+            aria-label="Đóng bảng tài liệu"
+          >
+            <svg><use href="#i-close" /></svg>
+          </button>
+        </div>
+      </div>
+      <div class="panel-tabs" role="tablist" aria-label="Chế độ bảng bên phải">
         <button
-          class="icon-button"
-          data-close-documents
-          aria-label="Đóng bảng tài liệu"
+          id="panel-tab-docs"
+          class="panel-tab active"
+          type="button"
+          role="tab"
+          aria-selected="true"
         >
-          <svg><use href="#i-close" /></svg>
+          Tài liệu &amp; Nguồn
+        </button>
+        <button
+          id="panel-tab-params"
+          class="panel-tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+        >
+          Tùy chỉnh Module
+        </button>
+        <button
+          id="panel-tab-trace"
+          class="panel-tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+        >
+          Trace &amp; Đánh giá
         </button>
       </div>
       <div class="document-scroll">
-        <p id="document-scope-description" class="panel-description"></p>
-        <select id="document-target" aria-label="Nơi lưu tài liệu" hidden>
-          <option value="session">Chỉ hội thoại này</option>
-        </select>
-        <label class="upload-zone" id="upload-zone" for="file-input"
-          ><svg><use href="#i-upload" /></svg>
-          <div>
-            <strong>Thêm tài liệu</strong
-            ><span>PDF hoặc TXT · tối đa 20 MB</span>
+        <div id="panel-docs-body">
+          <p id="document-scope-description" class="panel-description"></p>
+          <select id="document-target" aria-label="Nơi lưu tài liệu" hidden>
+            <option value="session">Chỉ hội thoại này</option>
+          </select>
+          <label class="upload-zone" id="upload-zone" for="file-input"
+            ><svg><use href="#i-upload" /></svg>
+            <div>
+              <strong>Thêm tài liệu</strong
+              ><span>PDF hoặc TXT · tối đa 20 MB</span>
+            </div>
+            <input
+              id="file-input"
+              type="file"
+              accept=".pdf,.txt"
+              aria-label="Tải file PDF hoặc TXT"
+          /></label>
+          <div
+            id="document-error"
+            class="inline-error"
+            role="alert"
+            hidden
+          ></div>
+          <div class="section-heading">
+            <h3>Tài liệu</h3>
+            <button
+              id="refresh-documents"
+              class="text-button"
+              aria-label="Làm mới tài liệu"
+            >
+              Làm mới
+            </button>
           </div>
-          <input
-            id="file-input"
-            type="file"
-            accept=".pdf,.txt"
-            aria-label="Tải file PDF hoặc TXT"
-        /></label>
-        <div id="document-error" class="inline-error" role="alert" hidden></div>
-        <div class="section-heading">
-          <h3>Tài liệu</h3>
-          <button
-            id="refresh-documents"
-            class="text-button"
-            aria-label="Làm mới tài liệu"
+          <div id="document-list" class="document-list"></div>
+          <div class="sources-heading">
+            <h3>Nguồn tham khảo</h3>
+            <span id="source-count" class="count">0</span>
+          </div>
+          <div id="source-list" class="source-list"></div>
+        </div>
+
+        <!-- TAB 2: TÙY CHỈNH 5 MODULE ACCORDION (RIGHT PANEL) -->
+        <div id="panel-params-body" class="params-drawer" hidden>
+          <div class="drawer-preset-box">
+            <div class="drawer-preset-top">
+              <span class="drawer-preset-label">PRESET CẤU HÌNH</span>
+              <span class="drawer-tag accent" id="drawer-preset-tag">Đang áp dụng</span>
+            </div>
+            <select
+              id="drawer-preset-select"
+              class="drawer-select"
+              aria-label="Chọn Preset cấu hình 5 Module"
+            >
+              <option value="preset-b" selected>Preset 2: Hybrid RRF v2</option>
+              <option value="preset-a">Preset 1: Baseline Lexical v1</option>
+              <option value="preset-c">Preset 3: Strict Legal Audit v3</option>
+            </select>
+            <div class="drawer-preset-actions">
+              <button type="button" class="secondary-button" id="btn-drawer-save">
+                Lưu Preset
+              </button>
+              <button type="button" class="secondary-button" id="btn-open-ab-studio">
+                So sánh A/B
+              </button>
+            </div>
+          </div>
+
+          <div class="param-acc-list">
+            <!-- MODULE 1 -->
+            <details class="param-acc-item" id="acc-mod-1">
+              <summary class="param-acc-head">
+                <span class="param-acc-left">
+                  <span class="param-acc-num">1</span>
+                  <span class="param-acc-title">Chunking &amp; Ingestion</span>
+                </span>
+                <span class="param-acc-right">
+                  <span class="param-acc-pill" id="pill-mod-1">800 / 120c</span>
+                  <svg class="param-acc-chev"><use href="#i-chev" /></svg>
+                </span>
+              </summary>
+              <div class="param-acc-body">
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-chunk-strategy">Chiến lược cắt đoạn</label>
+                  </div>
+                  <select id="dr-chunk-strategy" class="drawer-select">
+                    <option value="page_aware" selected>Theo cấu trúc Trang &amp; Mục</option>
+                    <option value="recursive">Recursive Character</option>
+                    <option value="semantic">Semantic Breakpoint</option>
+                  </select>
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-chunk-size">Kích thước đoạn (Chunk Size)</label>
+                    <output id="dr-val-chunk">800 ký tự</output>
+                  </div>
+                  <input
+                    id="dr-chunk-size"
+                    type="range"
+                    min="300"
+                    max="2000"
+                    step="100"
+                    value="800"
+                    data-slider="dr-val-chunk"
+                    data-unit=" ký tự"
+                  />
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-chunk-overlap">Độ gối (Chunk Overlap)</label>
+                    <output id="dr-val-overlap">120 ký tự</output>
+                  </div>
+                  <input
+                    id="dr-chunk-overlap"
+                    type="range"
+                    min="0"
+                    max="400"
+                    step="20"
+                    value="120"
+                    data-slider="dr-val-overlap"
+                    data-unit=" ký tự"
+                  />
+                </div>
+                <label class="drawer-check">
+                  <span>Giữ tiêu đề mục cha vào đầu chunk</span>
+                  <input id="dr-keep-heading" type="checkbox" checked />
+                </label>
+              </div>
+            </details>
+
+            <!-- MODULE 2 -->
+            <details class="param-acc-item" id="acc-mod-2" open>
+              <summary class="param-acc-head">
+                <span class="param-acc-left">
+                  <span class="param-acc-num">2</span>
+                  <span class="param-acc-title">RAG &amp; Retrieval</span>
+                </span>
+                <span class="param-acc-right">
+                  <span class="param-acc-pill" id="pill-mod-2">Hybrid · K=4</span>
+                  <svg class="param-acc-chev"><use href="#i-chev" /></svg>
+                </span>
+              </summary>
+              <div class="param-acc-body">
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-rag-mode">Kỹ thuật truy xuất</label>
+                  </div>
+                  <select id="dr-rag-mode" class="drawer-select">
+                    <option value="hybrid" selected>Hybrid (Dense + BM25 + RRF)</option>
+                    <option value="lexical">Lexical (NFKC + Từ khóa)</option>
+                    <option value="dense">Dense Vector (Cosine)</option>
+                  </select>
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-rag-rewrite">Biến đổi câu hỏi (Query Rewrite)</label>
+                  </div>
+                  <select id="dr-rag-rewrite" class="drawer-select">
+                    <option value="multi_query" selected>Multi-Query (Tách ý + Đồng nghĩa)</option>
+                    <option value="hyde">HyDE (Đoạn giả định)</option>
+                    <option value="raw">Raw Query (Giữ nguyên)</option>
+                  </select>
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-rag-topk">Số đoạn lấy ra (Top-K)</label>
+                    <output id="dr-val-topk">4 đoạn</output>
+                  </div>
+                  <input
+                    id="dr-rag-topk"
+                    type="range"
+                    min="1"
+                    max="12"
+                    step="1"
+                    value="4"
+                    data-slider="dr-val-topk"
+                    data-unit=" đoạn"
+                  />
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-rag-score">Ngưỡng điểm tối thiểu (Min Score)</label>
+                    <output id="dr-val-score">0.35</output>
+                  </div>
+                  <input
+                    id="dr-rag-score"
+                    type="range"
+                    min="0"
+                    max="0.9"
+                    step="0.05"
+                    value="0.35"
+                    data-slider="dr-val-score"
+                    data-unit=""
+                  />
+                </div>
+                <label class="drawer-check">
+                  <span>Bật Cross-Encoder Reranker</span>
+                  <input id="dr-rag-reranker" type="checkbox" checked />
+                </label>
+              </div>
+            </details>
+
+            <!-- MODULE 3 -->
+            <details class="param-acc-item" id="acc-mod-3">
+              <summary class="param-acc-head">
+                <span class="param-acc-left">
+                  <span class="param-acc-num">3</span>
+                  <span class="param-acc-title">Context Engineering</span>
+                </span>
+                <span class="param-acc-right">
+                  <span class="param-acc-pill" id="pill-mod-3">Lost-in-Middle</span>
+                  <svg class="param-acc-chev"><use href="#i-chev" /></svg>
+                </span>
+              </summary>
+              <div class="param-acc-body">
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-ctx-order">Thứ tự sắp xếp (Ordering)</label>
+                  </div>
+                  <select id="dr-ctx-order" class="drawer-select">
+                    <option value="lost_in_middle" selected>Lost-in-the-Middle (Đầu &amp; Cuối)</option>
+                    <option value="top_down">Top-Down (Điểm giảm dần)</option>
+                    <option value="page_order">Theo thứ tự trang tăng dần</option>
+                  </select>
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-ctx-budget">Ngân sách ngữ cảnh tối đa</label>
+                    <output id="dr-val-ctx">12000 ký tự</output>
+                  </div>
+                  <input
+                    id="dr-ctx-budget"
+                    type="range"
+                    min="2000"
+                    max="24000"
+                    step="1000"
+                    value="12000"
+                    data-slider="dr-val-ctx"
+                    data-unit=" ký tự"
+                  />
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-ctx-fmt">Định dạng đóng gói</label>
+                  </div>
+                  <select id="dr-ctx-fmt" class="drawer-select">
+                    <option value="xml" selected>Thẻ XML &lt;DOCUMENTS&gt;</option>
+                    <option value="markdown">Markdown ### [n] Nguồn</option>
+                  </select>
+                </div>
+                <label class="drawer-check">
+                  <span>Khử trùng lặp đoạn gối (&gt; 85%)</span>
+                  <input id="dr-ctx-dedup" type="checkbox" checked />
+                </label>
+              </div>
+            </details>
+
+            <!-- MODULE 4 -->
+            <details class="param-acc-item" id="acc-mod-4">
+              <summary class="param-acc-head">
+                <span class="param-acc-left">
+                  <span class="param-acc-num">4</span>
+                  <span class="param-acc-title">Memory (Hội thoại)</span>
+                </span>
+                <span class="param-acc-right">
+                  <span class="param-acc-pill" id="pill-mod-4">Summary + 4t</span>
+                  <svg class="param-acc-chev"><use href="#i-chev" /></svg>
+                </span>
+              </summary>
+              <div class="param-acc-body">
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-mem-mode">Chiến lược bộ nhớ</label>
+                  </div>
+                  <select id="dr-mem-mode" class="drawer-select">
+                    <option value="summary_buffer" selected>Summary Buffer + Lượt gần nhất</option>
+                    <option value="sliding_window">Sliding Window (Cửa sổ trượt)</option>
+                    <option value="stateless">Stateless (0 lịch sử — Eval)</option>
+                  </select>
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-mem-turns">Số lượt giữ nguyên (Window K)</label>
+                    <output id="dr-val-mem">4 lượt</output>
+                  </div>
+                  <input
+                    id="dr-mem-turns"
+                    type="range"
+                    min="0"
+                    max="12"
+                    step="1"
+                    value="4"
+                    data-slider="dr-val-mem"
+                    data-unit=" lượt"
+                  />
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-mem-chars">Ngân sách ký tự Memory</label>
+                    <output id="dr-val-memc">2400 ký tự</output>
+                  </div>
+                  <input
+                    id="dr-mem-chars"
+                    type="range"
+                    min="400"
+                    max="6000"
+                    step="200"
+                    value="2400"
+                    data-slider="dr-val-memc"
+                    data-unit=" ký tự"
+                  />
+                </div>
+                <label class="drawer-check">
+                  <span>Giải chiếu đại từ trước khi truy xuất</span>
+                  <input id="dr-mem-pronoun" type="checkbox" checked />
+                </label>
+              </div>
+            </details>
+
+            <!-- MODULE 5 -->
+            <details class="param-acc-item" id="acc-mod-5" open>
+              <summary class="param-acc-head">
+                <span class="param-acc-left">
+                  <span class="param-acc-num">5</span>
+                  <span class="param-acc-title">Prompt &amp; Generator</span>
+                </span>
+                <span class="param-acc-right">
+                  <span class="param-acc-pill" id="pill-mod-5">T=0.0</span>
+                  <svg class="param-acc-chev"><use href="#i-chev" /></svg>
+                </span>
+              </summary>
+              <div class="param-acc-body">
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-prm-tpl">Khuôn mẫu System Prompt</label>
+                  </div>
+                  <select id="dr-prm-tpl" class="drawer-select">
+                    <option value="analytical_cot_v2" selected>Analytical Step-by-Step v2</option>
+                    <option value="strict_grounded_v1">Strict Grounded v1</option>
+                    <option value="concise_exec_v3">Concise Executive v3</option>
+                  </select>
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-prm-text">System Prompt</label>
+                    <span class="studio-muted">{{DOCUMENTS}}</span>
+                  </div>
+                  <textarea id="dr-prm-text" class="drawer-textarea" rows="4">Bạn là chuyên gia phân tích tài liệu DocuminChat.
+1. Tách câu hỏi thành từng ý nhỏ và trả lời dựa trên {{DOCUMENTS}}.
+2. Mọi số liệu, tỷ lệ %, thời hạn bắt buộc gắn trích dẫn [1], [2].
+3. Tuyệt đối không suy diễn ngoài tài liệu.</textarea>
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-prm-temp">Temperature</label>
+                    <output id="dr-val-temp">0.0</output>
+                  </div>
+                  <input
+                    id="dr-prm-temp"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value="0.0"
+                    data-slider="dr-val-temp"
+                    data-unit=""
+                  />
+                </div>
+                <div class="drawer-field">
+                  <div class="drawer-field-top">
+                    <label for="dr-prm-topp">Top-P</label>
+                    <output id="dr-val-topp">0.85</output>
+                  </div>
+                  <input
+                    id="dr-prm-topp"
+                    type="range"
+                    min="0.1"
+                    max="1"
+                    step="0.05"
+                    value="0.85"
+                    data-slider="dr-val-topp"
+                    data-unit=""
+                  />
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <div class="drawer-foot">
+            <button type="button" class="primary-button" id="btn-drawer-apply">
+              ✓ Áp dụng cấu hình
+            </button>
+          </div>
+        </div>
+
+        <div id="panel-trace-body" class="panel-trace-body" hidden></div>
+      </div>
+    </dialog>
+
+    <!-- DIALOG STUDIO 2 CỘT & SO SÁNH A/B RAG TRIAD -->
+    <dialog
+      id="studio-dialog"
+      class="studio-dialog"
+      aria-labelledby="studio-dialog-title"
+    >
+      <header class="studio-head">
+        <div class="studio-head-left">
+          <svg><use href="#i-sliders" /></svg>
+          <h2 id="studio-dialog-title">Cài đặt &amp; Cấu hình Hệ thống</h2>
+          <span class="drawer-tag accent">5 Module &amp; RAG Triad</span>
+        </div>
+        <div class="studio-head-right">
+          <select
+            id="studio-preset-select"
+            class="drawer-select"
+            aria-label="Chọn Preset trong Studio"
           >
-            Làm mới
+            <option value="preset-b" selected>Preset 2: Hybrid RRF v2</option>
+            <option value="preset-a">Preset 1: Baseline Lexical v1</option>
+            <option value="preset-c">Preset 3: Strict Legal Audit v3</option>
+          </select>
+          <button type="button" class="primary-button" id="btn-studio-apply">
+            Lưu &amp; Áp dụng
+          </button>
+          <button
+            type="button"
+            class="icon-button"
+            id="btn-studio-close"
+            aria-label="Đóng cửa sổ Studio"
+          >
+            <svg><use href="#i-close" /></svg>
           </button>
         </div>
-        <div id="document-list" class="document-list"></div>
-        <div class="sources-heading">
-          <h3>Nguồn tham khảo</h3>
-          <span id="source-count" class="count">0</span>
+      </header>
+      <div class="studio-body">
+        <nav class="studio-nav" role="tablist" aria-label="Danh mục 5 Module">
+          <span class="studio-nav-label">Luồng 5 Module Pipeline</span>
+          <button type="button" class="studio-nav-btn" role="tab" data-studio-tab="chunking">
+            <span class="param-acc-num">1</span>
+            <span>Chunking &amp; Ingestion</span>
+          </button>
+          <button type="button" class="studio-nav-btn active" role="tab" data-studio-tab="rag">
+            <span class="param-acc-num">2</span>
+            <span>RAG &amp; Retrieval</span>
+          </button>
+          <button type="button" class="studio-nav-btn" role="tab" data-studio-tab="context">
+            <span class="param-acc-num">3</span>
+            <span>Context Engineering</span>
+          </button>
+          <button type="button" class="studio-nav-btn" role="tab" data-studio-tab="memory">
+            <span class="param-acc-num">4</span>
+            <span>Memory (Hội thoại)</span>
+          </button>
+          <button type="button" class="studio-nav-btn" role="tab" data-studio-tab="prompt">
+            <span class="param-acc-num">5</span>
+            <span>Prompt &amp; Generator</span>
+          </button>
+          <span class="studio-nav-label" style="margin-top:10px">Đánh giá &amp; Đối chiếu</span>
+          <button type="button" class="studio-nav-btn" role="tab" data-studio-tab="ab">
+            <span class="param-acc-num">A/B</span>
+            <span>So sánh A/B &amp; Triad</span>
+          </button>
+        </nav>
+        <div class="studio-main">
+          <div id="studio-mod-view" class="studio-mod-view">
+            <div class="studio-mod-banner">
+              <div>
+                <h3 id="studio-mod-heading">2. RAG &amp; Retrieval</h3>
+                <p id="studio-mod-desc" class="studio-muted"></p>
+              </div>
+              <div class="workspace-switcher" role="tablist">
+                <button
+                  type="button"
+                  class="workspace-tab active"
+                  role="tab"
+                  data-studio-subtab="params"
+                >
+                  Thiết lập thông số
+                </button>
+                <button
+                  type="button"
+                  class="workspace-tab"
+                  role="tab"
+                  data-studio-subtab="sandbox"
+                >
+                  Chạy thử Module (Sandbox)
+                </button>
+              </div>
+            </div>
+            <div id="studio-params-pane" class="studio-params-pane"></div>
+            <div id="studio-sandbox-pane" class="studio-sandbox-pane" hidden>
+              <pre id="studio-sandbox-output" class="trace-prompt-pre"></pre>
+            </div>
+            <div class="studio-impact-bar">
+              <span class="drawer-tag accent">Tác động</span>
+              <span id="studio-mod-impact" class="studio-muted"></span>
+            </div>
+          </div>
+
+          <div id="studio-ab-view" class="studio-ab-view" hidden>
+            <div class="studio-ab-top">
+              <input
+                id="ab-query-input"
+                class="studio-ab-input"
+                value="Mức phạt vi phạm SLA khi hệ thống gián đoạn quá 4 giờ, trường hợp miễn trừ và thời hạn thanh toán?"
+                aria-label="Câu hỏi thử nghiệm A/B"
+              />
+              <button type="button" class="primary-button" id="btn-run-ab">
+                Chạy đối chiếu A/B
+              </button>
+            </div>
+            <div class="studio-ab-cols">
+              <section class="studio-ab-col" aria-label="Cột A Baseline">
+                <div class="studio-ab-col-head">
+                  <strong>CỘT A · Preset 1: Baseline Lexical v1</strong>
+                  <span class="drawer-tag warn">6 / 9 điểm Triad</span>
+                </div>
+                <p class="studio-muted">
+                  RAG: Lexical Top-3 · Context: Top-Down · Memory: Sliding 4 lượt
+                </p>
+                <div class="studio-triad-grid">
+                  <div class="studio-triad-card">
+                    <span>1. Context Relevance</span>
+                    <strong>2 / 3</strong>
+                  </div>
+                  <div class="studio-triad-card">
+                    <span>2. Faithfulness</span>
+                    <strong>3 / 3</strong>
+                  </div>
+                  <div class="studio-triad-card">
+                    <span>3. Answer Relevance</span>
+                    <strong>1 / 3</strong>
+                  </div>
+                </div>
+              </section>
+              <section class="studio-ab-col winner" aria-label="Cột B Đã tối ưu">
+                <div class="studio-ab-col-head">
+                  <strong>CỘT B · Preset 2: Hybrid RRF v2</strong>
+                  <span class="drawer-tag accent" id="ab-triad-b-score">9 / 9 điểm · Tối ưu</span>
+                </div>
+                <p class="studio-muted">
+                  RAG: Hybrid RRF Top-4 + Query Rewrite · Context: Lost-in-the-Middle
+                </p>
+                <div class="studio-triad-grid">
+                  <div class="studio-triad-card">
+                    <span>1. Context Relevance</span>
+                    <strong>3 / 3</strong>
+                  </div>
+                  <div class="studio-triad-card">
+                    <span>2. Faithfulness</span>
+                    <strong>3 / 3</strong>
+                  </div>
+                  <div class="studio-triad-card">
+                    <span>3. Answer Relevance</span>
+                    <strong>3 / 3</strong>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
         </div>
-        <div id="source-list" class="source-list"></div>
       </div>
     </dialog>
     <dialog

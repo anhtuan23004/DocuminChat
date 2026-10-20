@@ -7,26 +7,29 @@ class ProviderError(Exception):
     pass
 
 
-async def generate(settings, messages, transport=None):
+async def generate(settings, messages, transport=None, *, temperature=0.2, top_p=None):
     headers = {}
     if settings.llm_api_key:
         headers["Authorization"] = f"Bearer {settings.llm_api_key}"
     client = httpx.AsyncClient(
         timeout=settings.llm_timeout_seconds, transport=transport, follow_redirects=False
     )
+    payload = {
+        "model": settings.llm_model,
+        "messages": messages,
+        "stream": True,
+        "temperature": float(temperature),
+        "max_tokens": 1024,
+    }
+    if top_p is not None:
+        payload["top_p"] = float(top_p)
     async with (
         client,
         client.stream(
             "POST",
             settings.llm_base_url.rstrip("/") + "/chat/completions",
             headers=headers,
-            json={
-                "model": settings.llm_model,
-                "messages": messages,
-                "stream": True,
-                "temperature": 0.2,
-                "max_tokens": 1024,
-            },
+            json=payload,
         ) as response,
     ):
         if response.status_code != 200:

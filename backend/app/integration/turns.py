@@ -10,9 +10,52 @@ from app.integration.auth import OWNER
 from app.projects.scopes import available_documents, owned_session
 from app.storage import Document, Message, Session, Turn, identifier, now
 
+_TRACES: dict[str, dict] = {}
+
+
+def record_trace(message_id: str, trace: dict | None):
+    if not message_id or not trace:
+        return
+    if len(_TRACES) > 1000:
+        _TRACES.pop(next(iter(_TRACES)), None)
+    _TRACES[message_id] = dict(trace)
+
+
+def build_fallback_trace(message):
+    if message.role != "assistant":
+        return None
+    sources = message.sources or []
+    context = "\n\n".join(
+        f"[{i}] {s.get('name', 'Tài liệu')}, trang {s.get('page', 1)}\n{s.get('text', '')}"
+        for i, s in enumerate(sources, 1)
+    )
+    matched_terms = []
+    for s in sources:
+        for term in s.get("matched_terms") or []:
+            if term not in matched_terms:
+                matched_terms.append(term)
+    return {
+        "phase": message.status,
+        "mode": "lexical",
+        "query_terms": [[term, True] for term in matched_terms],
+        "document_count": len({s.get("document_id") for s in sources if s.get("document_id")}),
+        "scanned_chunks": len(sources),
+        "matched_chunks": len(sources),
+        "selected_chunks": len(sources),
+        "retrieve_ms": 0.0,
+        "ttft_ms": 0.0,
+        "generation_ms": 0.0,
+        "total_ms": 0.0,
+        "context_chars": len(context),
+        "max_context_chars": 12000,
+        "truncated": False,
+        "output_chars": len(message.content or ""),
+        "finish_reason": message.status,
+    }
+
 
 def message_dict(message):
-    return {
+    data = {
         "id": message.id,
         "role": message.role,
         "content": message.content,
@@ -20,6 +63,9 @@ def message_dict(message):
         "sources": message.sources,
         "created_at": message.created_at.isoformat(),
     }
+    if message.role == "assistant":
+        data["trace"] = _TRACES.get(message.id) or build_fallback_trace(message)
+    return data
 
 
 def begin(factory, settings, session_id, payload):
@@ -128,7 +174,9 @@ def begin(factory, settings, session_id, payload):
         return {"message_id": assistant.id, "history": history, "document_ids": document_ids}
 
 
-def finish(factory, session_id, request_id, message_id, answer, sources, status):
+def finish(factory, session_id, request_id, message_id, answer, sources, status, trace=None):
+    if trace:
+        record_trace(message_id, {**trace, "phase": status})
     with factory() as db:
         result = db.execute(
             update(Session)

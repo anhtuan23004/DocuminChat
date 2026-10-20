@@ -7,6 +7,8 @@ import { projectPanel } from "./projects.js";
 import { historySearch } from "./search.js";
 import { messageView } from "./messages.js";
 import { sessionOptions } from "./session-options.js";
+import { traceInspector } from "./trace.js";
+import { initStudio } from "./studio.js";
 import { $, element, icon, showError } from "./dom.js";
 
 export function chat(docs, closeDrawers, openDocuments) {
@@ -22,7 +24,9 @@ export function chat(docs, closeDrawers, openDocuments) {
     projectOffset = 0;
   const projects = projectPanel(chooseProject),
     history = historyPanel(select),
-    messages = messageView(docs, openDocuments);
+    trace = traceInspector(openDocuments),
+    studio = initStudio(docs, trace, openDocuments),
+    messages = messageView(docs, openDocuments, trace);
   const draftKey = () => drafts.key(state.sessionId, activeProject?.id);
   const saveDraft = () => drafts.set(draftKey(), $("composer").value);
   const scopeValue = () => ({
@@ -155,6 +159,7 @@ export function chat(docs, closeDrawers, openDocuments) {
     closeDrawers();
     history.select(null);
     $("messages").replaceChildren();
+    trace.reset();
     showError("chat-error");
     projectChats = [];
     projectChatRows();
@@ -180,6 +185,7 @@ export function chat(docs, closeDrawers, openDocuments) {
     pendingCreation = null;
     closeDrawers();
     $("messages").replaceChildren();
+    trace.reset();
     $("chat-loading").hidden = false;
     $("welcome").hidden = true;
     $("project-view").hidden = true;
@@ -196,12 +202,29 @@ export function chat(docs, closeDrawers, openDocuments) {
       restoreDraft();
       await docs.setScope(scopeValue());
       let offset = 0;
+      let lastUserQuery = "";
       while (state.current(epoch)) {
         const data = await json(
           `/sessions/${id}/messages?offset=${offset}&limit=200`,
         );
         if (!state.current(epoch)) return;
-        data.items.forEach(messages.add);
+        for (const item of data.items) {
+          if (item.role === "user") {
+            lastUserQuery = item.content;
+          }
+          const rendered = messages.add(item);
+          if (item.role === "assistant") {
+            const turnId = trace.upsertTurn({
+              id: item.id,
+              userQuery: lastUserQuery,
+              content: item.content,
+              status: item.status,
+              sources: item.sources || [],
+              trace: item.trace || null,
+            });
+            rendered.turnId = turnId;
+          }
+        }
         offset += data.items.length;
         const latest = [...data.items].reverse().find((m) => m.sources?.length);
         if (latest) docs.sources(latest.sources);
@@ -317,6 +340,7 @@ export function chat(docs, closeDrawers, openDocuments) {
           content: query,
           document_ids: [...docs.selected],
           request_id: crypto.randomUUID(),
+          pipeline_config: studio.getConfig(),
         }),
         signal: controller.signal,
       });
@@ -324,10 +348,20 @@ export function chat(docs, closeDrawers, openDocuments) {
       $("composer").value = "";
       drafts.set(draftKey(), "");
       messages.add({ role: "user", content: query });
+      const liveTurnId = `live-${Date.now()}`;
       assistant = messages.add({
+        id: liveTurnId,
         role: "assistant",
         content: "",
         status: "streaming",
+      });
+      assistant.turnId = trace.upsertTurn({
+        id: liveTurnId,
+        userQuery: query,
+        content: "",
+        status: "streaming",
+        sources: [],
+        trace: null,
       });
       view();
       follow = true;
@@ -337,12 +371,38 @@ export function chat(docs, closeDrawers, openDocuments) {
         (event) => {
           if (!state.current(epoch)) return;
           if (event.type === "delta") {
-            assistant.content.textContent += event.data.text;
+            assistant.rawText = (assistant.rawText || "") + event.data.text;
+            assistant.content.textContent = assistant.rawText;
+            trace.upsertTurn({
+              id: assistant.turnId,
+              userQuery: query,
+              content: assistant.rawText,
+            });
             scroll();
           }
           if (event.type === "sources") {
             docs.sources(event.data.items);
             messages.addSources(assistant, event.data.items);
+            trace.upsertTurn({
+              id: assistant.turnId,
+              userQuery: query,
+              sources: event.data.items,
+            });
+          }
+          if (event.type === "trace") {
+            messages.updateTrace(assistant, event.data, assistant.refs);
+            trace.upsertTurn({
+              id: assistant.turnId,
+              userQuery: query,
+              trace: event.data,
+            });
+          }
+          if (event.type === "done" && event.data?.message_id) {
+            trace.upsertTurn({
+              id: assistant.turnId,
+              userQuery: query,
+              status: "completed",
+            });
           }
         },
         controller.signal,
@@ -350,6 +410,13 @@ export function chat(docs, closeDrawers, openDocuments) {
       if (state.current(epoch)) {
         assistant.row.classList.remove("streaming");
         assistant.row.querySelector(".message-status")?.remove();
+        messages.decorateCitations(assistant);
+        trace.upsertTurn({
+          id: assistant.turnId,
+          userQuery: query,
+          content: assistant.rawText,
+          status: "completed",
+        });
         await history.refresh();
         if (state.current(epoch)) view();
       }
@@ -366,6 +433,10 @@ export function chat(docs, closeDrawers, openDocuments) {
           assistant.row.classList.add("failed");
           const status = assistant.row.querySelector(".message-status");
           if (status) status.textContent = "Lượt trả lời bị gián đoạn";
+          trace.upsertTurn({
+            id: assistant.turnId,
+            status: "failed",
+          });
         }
       }
     } finally {

@@ -1,82 +1,101 @@
-# DocuminChat - Multi-Format Document Query System
+# DocuminChat
 
-DocuminChat is an advanced application that allows you to upload and query data from various file formats including CSV, XLSX, JSON, and PDF. The application leverages language models and embeddings to provide conversational querying capabilities. It processes the uploaded documents, splits them into manageable chunks, generates embeddings, and enables users to ask questions about the data. Built using Streamlit, LangChain, Hugging Face, and various NLP techniques, DocuminChat offers a seamless and interactive experience for data exploration.
+Khung chạy local: **UI custom theo Hermes + FastAPI/LangGraph + ingestion
+worker + PostgreSQL/pgvector**, toàn bộ stack Docker hóa. Model đặt trên
+Colab/GPU server qua API OpenAI-compatible.
 
-## Features
+**Hướng cập nhật:** UX chat/Project theo ChatGPT; phát triển các capabilities
+tham khảo Hermes WebUI, bao gồm skills, memory, usage và agent activity/cycle.
+Full snapshot đã import vào `vendor/hermes-webui/`.
+Đọc [full workbench + scale](docs/architecture/hermes-full-workbench.md). UI ở
+port3030 hiện là prototype kiểm chứng backend; full Hermes API/runtime migration
+chưa hoàn tất, không coi các panels vendor là features đã nối backend mới.
 
-- **Multi-Format Support**: Upload and process files in CSV, XLSX, JSON, and PDF formats.
-- **Data Chunking**: Split data into manageable chunks for efficient processing.
-- **Embeddings Generation**: Create embeddings from the data using pre-trained models.
-- **Conversational AI**: Use advanced conversational AI models to answer questions based on the uploaded data.
-- **Paginated Data View**: View data in a paginated format for better readability and navigation.
+## Chạy
 
-## Diagram
-
-![Image](https://github.com/user-attachments/assets/8d56a16a-f599-4d9d-b92a-f0a61ca87342)
-
-## Installation
-
-### 1. Clone the repository or download the code.
 ```bash
-git clone <repository_url>
-cd <project_directory>
+python3 scripts/bootstrap_env.py
+docker compose up -d --build --wait
 ```
 
-### 2. Set up a virtual environment (optional but recommended).
+Mở **http://127.0.0.1:3030**. OpenAPI: http://127.0.0.1:8000/docs.
+UI/upload/history hoạt động khi chưa có model; gửi chat cần cấu hình
+`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` trong `.env`, sau đó:
+
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows use venv\Scripts\activate
+docker compose up -d --force-recreate api worker
 ```
 
-### 3. Install dependencies from requirements.txt.
-Make sure `requirements.txt` is in the project directory.
-```bash
-pip install -r requirements.txt
+[Hướng dẫn Colab](docs/ref/colab-local-guide.md) mô tả server/tunnel và nối
+backend. Không cần chạy Hermes hay tải model vào máy local để khởi động UI.
+
+Sidebar có **Projects**: tạo Project, thêm file dùng chung và mở các chat
+trong Project. Nhập câu hỏi ngay ở trang Project; **Cmd/Ctrl+K** tìm tên/nội
+dung trong toàn bộ lịch sử, gồm chat lưu trữ. Menu chat có đổi tên và chuyển
+Project; Back khôi phục context và nháp trong phiên trình duyệt.
+Nút đính kèm trên composer lưu file riêng cho session; bảng
+tài liệu hiển thị cả file riêng và nguồn kế thừa từ Project. Chuyển Project
+giữ lịch sử và file riêng. [Contract và migration](docs/architecture/projects-and-files.md).
+Xem [nghiên cứu UX ChatGPT](docs/ref/chatgpt-webui-research.md).
+
+## Cấu trúc
+
+```text
+frontend/                 UI độc lập, native ES modules, Nginx
+backend/app/
+  integration/            contracts, ownership, chat turns
+  projects/               Project/session scope và quyền kế thừa tài liệu
+  documents/              PDF/TXT parsing và chunking
+  retrieval/              tìm kiếm và source references
+  generation/             OpenAI-compatible streaming adapter
+  rag/                    graph retrieve → respond
+  jobs/                   durable ingestion worker
+  storage.py              schema/shared persistence
+backend/migrations/       Alembic migrations
+scripts/                  bootstrap env, checks
+compose.yaml              frontend/api/worker/migrate/postgres
+references/hermes-webui/  source reference đã clone, ignored
+vendor/hermes-webui/      full pinned fork snapshot + upstream contracts/tests
+docs/ref/                nguồn tham khảo / Colab / retrieval nghiên cứu
+docs/architecture/       kiến trúc và contract code hiện hành
+docs/archive/            khảo sát và thiết kế trước đây
 ```
 
-### 4. Install Model
-Follow the instructions in the `models` folder to install the necessary models.
+Đọc [docs index](docs/README.md), [kiến trúc](docs/architecture/README.md),
+[API](docs/architecture/api.md), [Docker/vận hành](docs/architecture/deployment.md).
 
-## Usage
+## Phạm vi bản khung
 
-### 1. Start the Application
-After installing all dependencies and setting up the environment, you can run the application using Streamlit:
+Đã có upload PDF có text/TXT, worker thật, chunks theo trang, lịch sử trong
+PostgreSQL, request idempotency, source ownership, LangGraph và SSE adapter.
+Retrieval hiện dùng **từ khóa**; pgvector extension đã cài nhưng chưa có
+embedding/dense retrieval. PDF scan báo cần OCR. Model chưa cấu hình/đứt
+stream được hiển thị rõ; không có câu trả lời mẫu trong app.
+
+Đây là development một người, ports bind loopback và identity server `local`.
+Chưa có authentication nhiều người, tokenizer budgeting hay cấu hình
+production. Đọc giới hạn và thứ tự nâng cấp trong architecture.
+
+## Kiểm tra
+
 ```bash
-streamlit run app.py
+cd backend
+uv sync --frozen --python 3.12
+uv run pytest -q
+uv run ruff check .
+uv run ruff format --check .
+cd ../frontend
+npm ci
+npm test
+npx playwright install chromium
+npm run test:browser
+cd ..
+python3 scripts/check_docs.py
 ```
 
-### 2. Upload a File
-- Click the "Upload a File" button to select and upload your file (CSV, XLSX, JSON, or PDF).
-- The data will be loaded, split into chunks, and the app will show a paginated view of the data.
+Browser test real stack dùng model chưa cấu hình; test stream thành công
+sử dụng fixture riêng. Không có GPU/Colab session trong test tự động.
 
-### 3. Ask a Question
-- Once the data is uploaded, you can type a question in the text box.
-- Press the "Submit" button to get the answer based on the uploaded data.
-
-### 4. Pagination
-- The data is displayed in pages to avoid overwhelming the user with too much information at once.
-- Use the page selector to view different parts of the data.
-
-## Supported File Formats
-
-- **CSV**: Comma-separated values file.
-- **XLSX**: Microsoft Excel file.
-- **JSON**: JavaScript Object Notation file.
-- **PDF**: Portable Document Format file.
-
-## Example Queries
-
-- **For CSV/XLSX**: "What is the average value in column X?"
-- **For JSON**: "What are the keys in the JSON object?"
-- **For PDF**: "Summarize the content on page 5."
-
-## Acknowledgments
-
-- **Streamlit** for the interactive web application framework.
-- **LangChain** for the language model integration.
-- **Hugging Face** for the pre-trained models and embeddings.
-- **Pandas** for data manipulation and analysis.
-
----
-
-Enjoy exploring your data with DocumentChat! For any questions or support, please refer to the documentation or reach out to the maintainers.
+Code Streamlit cũ (`app.py`, `models/`, `utils/`, `requirements.txt`) vẫn giữ
+nguyên để đối chiếu. Hướng dẫn cũ ở [archive README](docs/archive/2026-10-12-pre-skeleton/root-README.md).
+Backend mới không import hay dùng dependencies của bản cũ.

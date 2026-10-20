@@ -4,3 +4,29 @@
 venv/
 
 __pycache__/
+
+# Upstream source/UX reference, vendor snapshots, and archived/ref docs
+/references/
+/vendor/
+/docs/archive/
+/docs/ref/
+
+# Legacy Streamlit prototype files
+/app.py
+/config.py
+/test_model.py
+/requirements.txt
+/models/
+/utils/
+
+/.env
+/.data/
+backend/.venv/
+backend/.data/
+.pytest_cache/
+.ruff_cache/
+frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
+/artifacts/
+.DS_Store

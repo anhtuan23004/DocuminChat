@@ -1,0 +1,135 @@
+.project-view {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 56px 0 40px;
+}
+.project-hero,
+.project-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.project-hero {
+  justify-content: space-between;
+}
+.project-title {
+  flex: 1;
+}
+.project-title > svg {
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+}
+.project-hero h1 {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.7px;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.project-hero .secondary-button {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.project-hero .secondary-button svg {
+  width: 16px;
+  height: 16px;
+}
+.project-description {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0 28px;
+}
+.project-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.project-section {
+  margin-top: 28px;
+}
+.project-section > .section-heading {
+  margin-bottom: 12px;
+}
+.section-caption {
+  font-size: 10px;
+  color: var(--muted);
+}
+.project-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.project-file-row > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+}
+.project-chat-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 15px 4px;
+  width: 100%;
+  border-bottom: 1px solid var(--line);
+}
+.project-chat-row > svg {
+  color: var(--muted);
+  width: 18px;
+  height: 18px;
+}
+.project-chat-row > span {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.project-chat-row time {
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .project-view {
+    padding-top: 32px;
+  }
+  .project-hero {
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .project-title {
+    gap: 8px;
+  }
+  .project-hero h1 {
+    font-size: 23px;
+  }
+  .project-title > svg {
+    width: 22px;
+    height: 22px;
+    margin-top: 4px;
+  }
+  .project-hero .secondary-button {
+    padding: 7px 10px;
+  }
+  .section-caption {
+    display: none;
+  }
+  .project-description {
+    font-size: 11px;
+  }
+  .project-actions {
+    gap: 4px;
+  }
+  .project-actions .text-button {
+    font-size: 11px;
+  }
+}
